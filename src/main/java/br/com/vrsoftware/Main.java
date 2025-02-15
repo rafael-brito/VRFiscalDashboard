@@ -12,13 +12,6 @@ public class Main {
 
         DashboardApiClientService client = new DashboardApiClientService(credentials);
 
-        // Example get issue
-//        System.out.println(client.getIssue());
-
-        // Example get issue worklogs
-//        System.out.println(client.getIssueWorklogs());
-
-        // Example get worklog
-        System.out.println(client.getWorklog());
+        System.out.println(client.getIssue());
     }
 }
