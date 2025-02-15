@@ -1,6 +1,7 @@
 package br.com.vrsoftware.service.jira;
 
 import br.com.vrsoftware.config.HttpClientConfig;
+import br.com.vrsoftware.config.ObjectMapperConfig;
 import br.com.vrsoftware.dto.AuthCredentialsDTO;
 import br.com.vrsoftware.exceptions.RequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,13 +13,11 @@ import java.net.http.HttpResponse;
 
 public class BaseApiClientService {
     protected final HttpClient httpClient;
-    protected final ObjectMapper objectMapper;
     protected final String baseUrl;
     protected final AuthCredentialsDTO authCredentials;
 
     protected BaseApiClientService(String baseUrl, AuthCredentialsDTO authCredentials) {
         this.httpClient = HttpClientConfig.createHttpClient();
-        this.objectMapper = HttpClientConfig.createObjectMapper();
         this.baseUrl = baseUrl;
         this.authCredentials = authCredentials;
     }
@@ -34,21 +33,14 @@ public class BaseApiClientService {
         return builder;
     }
 
-    protected String handleResponse(HttpResponse<String> response) throws Exception {
-//    protected <T> T handleResponse(HttpResponse<String> response, Class<T> responseType) throws Exception {
-        switch (response.statusCode()) {
-            case 200:
-            case 201:
-                return response.body();
-//                return objectMapper.readValue(response.body(), responseType);
-            case 401:
-                throw new RequestException("Erro de autenticação. Verifique suas credenciais.");
-            case 403:
-                throw new RequestException("Acesso negado. Você não tem permissão para acessar este recurso.");
-            case 404:
-                throw new RequestException("Recurso não encontrado.");
-            default:
-                throw new RequestException("Erro na requisição: " + response.statusCode() + " - " + response.body());
-        }
+    protected <T> T handleResponse(HttpResponse<String> response, Class<T> responseType) {
+        return switch (response.statusCode()) {
+            case 200, 201 -> ObjectMapperConfig.fromJson(response.body(), responseType);
+            case 401 -> throw new RequestException("Erro de autenticação. Verifique suas credenciais.");
+            case 403 -> throw new RequestException("Acesso negado. Você não tem permissão para acessar este recurso.");
+            case 404 -> throw new RequestException("Recurso não encontrado.");
+            default ->
+                    throw new RequestException("Erro na requisição: " + response.statusCode() + " - " + response.body());
+        };
     }
 }
