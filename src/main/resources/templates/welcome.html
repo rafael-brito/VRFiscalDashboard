@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${welcome.title}">Welcome</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .welcome-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .info-line {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="welcome-card">
+    <h1 th:text="${welcome.title}">Title</h1>
+    <p th:text="${welcome.message}">Message</p>
+
+    <div class="info-line">
+        <span class="label">Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): </span>
+        <span th:text="${welcome.currentDateTime}">2025-02-20 17:16:22</span>
+    </div>
+
+    <div class="info-line">
+        <span class="label">Current User's Login: </span>
+        <span th:text="${welcome.currentUser}">rafael-brito</span>
+    </div>
+</div>
+</body>
+</html>
