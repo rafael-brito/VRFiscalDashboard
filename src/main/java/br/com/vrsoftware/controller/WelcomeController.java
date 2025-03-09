@@ -23,7 +23,6 @@ public class WelcomeController {
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         var welcome = new WelcomeDTO(title, message, currentUser, currentDateTime);
-        model.addAttribute("welcome", welcome);
 
         return "welcome";
     }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${welcome.title}">Welcome</title>
+    <title>Welcome</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,17 +29,17 @@
 </head>
 <body>
 <div class="welcome-card">
-    <h1 th:text="${welcome.title}">Title</h1>
-    <p th:text="${welcome.message}">Message</p>
+    <h1 >Title</h1>
+    <p >Message</p>
 
     <div class="info-line">
         <span class="label">Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): </span>
-        <span th:text="${welcome.currentDateTime}">2025-02-20 17:16:22</span>
+        <span >2025-02-20 17:16:22</span>
     </div>
 
     <div class="info-line">
         <span class="label">Current User's Login: </span>
-        <span th:text="${welcome.currentUser}">rafael-brito</span>
+        <span >rafael-brito</span>
     </div>
 </div>
 </body>
