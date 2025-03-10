@@ -48,6 +48,7 @@ public class IssueDTO {
         String title;
         ActorDTO creator;
         ActorDTO reporter;
+        ActorDTO assignee;
         List<VRComponentDTO> components;
         StatusDTO status;
         @JsonAlias("customfield_10040")
@@ -55,6 +56,7 @@ public class IssueDTO {
         VersionDTO version;
         Worklog worklog;
         ProjectDTO project;
+        PriorityDTO priority;
 
         public JiraFields() {}
 
@@ -80,6 +82,14 @@ public class IssueDTO {
 
         public void setReporter(ActorDTO reporter) {
             this.reporter = reporter;
+        }
+
+        public ActorDTO getAssignee() {
+            return assignee;
+        }
+
+        public void setAssignee(ActorDTO assignee) {
+            this.assignee = assignee;
         }
 
         public List<VRComponentDTO> getComponents() {
@@ -120,6 +130,14 @@ public class IssueDTO {
 
         public void setProject(ProjectDTO project) {
             this.project = project;
+        }
+
+        public PriorityDTO getPriority() {
+            return priority;
+        }
+
+        public void setPriority(PriorityDTO priority) {
+            this.priority = priority;
         }
 
         @Override

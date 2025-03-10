@@ -1,8 +1,5 @@
 package br.com.vrsoftware;
 
-import br.com.vrsoftware.dto.AuthCredentialsDTO;
-import br.com.vrsoftware.service.jira.DashboardApiClientService;
-import br.com.vrsoftware.service.security.SecureCredentialsLoaderService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -10,12 +7,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Main {
 
     public static void main(String[] args) {
-        AuthCredentialsDTO credentials = SecureCredentialsLoaderService
-                .loadSecureCredentials(args[0]);
-
-        DashboardApiClientService client = new DashboardApiClientService(credentials);
-
-        System.out.println(client.getIssue());
+//        AuthCredentialsDTO credentials = SecureCredentialsLoaderService
+//                .loadSecureCredentials(args[0]);
+//
+//        DashboardApiClientService client = new DashboardApiClientService(credentials);
+//
+//        System.out.println(client.getIssue());
 
         SpringApplication.run(Main.class, args);
     }

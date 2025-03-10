@@ -22,6 +22,13 @@ public class ObjectMapperConfig {
 
     public static <T> T fromJson(String content, Class<T> valueType) {
         try {
+            // Special case for String.class
+            if (String.class.equals(valueType)) {
+                // If caller wants a String, we should still validate that it's proper JSON
+                // We can do this by parsing and then ignoring the result
+                MAPPER.readTree(content); // This will throw if not valid JSON
+                return valueType.cast(content);
+            }
             return MAPPER.readValue(content, valueType);
         } catch (JsonProcessingException e) {
             throw new SerializationException("Falha ao deserializar objeto.", e);

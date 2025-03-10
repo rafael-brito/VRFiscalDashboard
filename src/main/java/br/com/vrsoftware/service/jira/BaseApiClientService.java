@@ -4,31 +4,52 @@ import br.com.vrsoftware.config.HttpClientConfig;
 import br.com.vrsoftware.config.ObjectMapperConfig;
 import br.com.vrsoftware.dto.AuthCredentialsDTO;
 import br.com.vrsoftware.exceptions.RequestException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Optional;
 
 public class BaseApiClientService {
     protected final HttpClient httpClient;
     protected final String baseUrl;
-    protected final AuthCredentialsDTO authCredentials;
 
-    protected BaseApiClientService(String baseUrl, AuthCredentialsDTO authCredentials) {
+    protected BaseApiClientService(String baseUrl) {
         this.httpClient = HttpClientConfig.createHttpClient();
         this.baseUrl = baseUrl;
-        this.authCredentials = authCredentials;
     }
 
-    protected HttpRequest.Builder createRequestBuilder(String path) {
+    protected HttpRequest.Builder createRequestBuilder(String path, AuthCredentialsDTO credentials) {
+        return createRequestBuilder(path, credentials, Optional.empty());
+    }
+
+    /**
+     * Creates a request builder with authentication headers for the provided credentials
+     */
+    protected HttpRequest.Builder createRequestBuilder(String path, AuthCredentialsDTO credentials, Optional<String> jql) {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + path))
                 .header("Content-Type", "application/json");
 
-        if (authCredentials != null) {
-            builder.header("Authorization", authCredentials.getBasicAuthHeader());
+        String uriString = baseUrl + path;
+
+        if (jql.isPresent()) {
+            URI uri = UriComponentsBuilder
+                    .fromUriString(baseUrl)
+                    .path(path)
+                    .queryParam("jql", jql.get())
+                    .build()
+                    .encode()
+                    .toUri();
+
+            builder.uri(uri);
+        } else {
+            builder.uri(URI.create(uriString));
+        }
+
+        if (credentials != null) {
+            builder.header("Authorization", credentials.getBasicAuthHeader());
         }
         return builder;
     }
