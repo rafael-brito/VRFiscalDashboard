@@ -1,8 +1,11 @@
-package br.com.vrsoftware.usecases.security;
+package br.com.vrsoftware.usecases.security.jiracredentials;
 
 import java.util.Scanner;
 
 public class SetupCredentials {
+
+    private static CredentialsEncryptor encryptor = new CredentialsEncryptor();
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
@@ -15,7 +18,7 @@ public class SetupCredentials {
         System.out.print("Enter master password for encryption (don't tell it to anyone): ");
         String masterPassword = scanner.nextLine();
 
-        CredentialsEncryptor.createSecureCredentialsFile(username, password, masterPassword);
+        encryptor.createFile(masterPassword, username, password);
 
         System.out.println("Credentials setup completed successfully!");
     }

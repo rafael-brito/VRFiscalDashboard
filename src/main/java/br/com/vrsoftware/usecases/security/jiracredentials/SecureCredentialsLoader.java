@@ -1,8 +1,9 @@
-package br.com.vrsoftware.usecases.security;
+package br.com.vrsoftware.usecases.security.jiracredentials;
 
 import br.com.vrsoftware.entities.AuthCredentials;
 import br.com.vrsoftware.exceptions.AuthenticationException;
 import br.com.vrsoftware.exceptions.EncryptionException;
+import br.com.vrsoftware.usecases.security.ISecureLoader;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -13,10 +14,11 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.Base64;
 
-public class SecureCredentialsLoader {
+public class SecureCredentialsLoader implements ISecureLoader<AuthCredentials> {
     private static final String CREDENTIALS_FILE = "secure-credentials.dat";
 
-    public static AuthCredentials loadSecureCredentials(String masterPassword) {
+    @Override
+    public AuthCredentials secureLoad(String masterPassword) {
         try {
             Path credentialsPath = Paths.get(System.getProperty("user.dir"), "config", CREDENTIALS_FILE);
 
@@ -46,13 +48,15 @@ public class SecureCredentialsLoader {
         }
     }
 
-    protected static SecretKey generateKeyFromPassword(String password) throws Exception {
+    @Override
+    public SecretKey generateKeyFromPassword(String password) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(password.getBytes("UTF-8"));
         return new SecretKeySpec(hash, "AES");
     }
 
-    private static String decrypt(byte[] encryptedData, SecretKey key) throws Exception {
+    @Override
+    public String decrypt(byte[] encryptedData, SecretKey key) throws Exception {
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.DECRYPT_MODE, key);
         byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedData));

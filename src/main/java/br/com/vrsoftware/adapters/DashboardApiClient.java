@@ -1,6 +1,7 @@
 package br.com.vrsoftware.adapters;
 
 import br.com.vrsoftware.entities.AuthCredentials;
+import br.com.vrsoftware.entities.AuthProxy;
 import br.com.vrsoftware.entities.jira.issue.Issue;
 import br.com.vrsoftware.entities.jira.Project;
 import br.com.vrsoftware.entities.jira.Worklog;
@@ -11,8 +12,10 @@ import java.net.http.HttpResponse;
 
 public class DashboardApiClient extends BaseApiClient {
 
-    public DashboardApiClient(AuthCredentials authCredentials) {
-        super("https://vrsoft.atlassian.net", authCredentials);
+    private static final String BASE_URL = "https://vrsoft.atlassian.net";
+
+    public DashboardApiClient(AuthCredentials authCredentials, AuthProxy pAuthProxy) {
+        super("https://vrsoft.atlassian.net", authCredentials, pAuthProxy);
     }
 
     public Issue getIssue() {

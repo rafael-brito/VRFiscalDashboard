@@ -1,6 +1,7 @@
 package br.com.vrsoftware.adapters;
 
 import br.com.vrsoftware.entities.AuthCredentials;
+import br.com.vrsoftware.entities.AuthProxy;
 import br.com.vrsoftware.exceptions.RequestException;
 import br.com.vrsoftware.usecases.HttpClientConfig;
 import br.com.vrsoftware.usecases.ObjectMapperConfig;
@@ -14,11 +15,13 @@ public class BaseApiClient {
     protected final HttpClient httpClient;
     protected final String baseUrl;
     protected final AuthCredentials authCredentials;
+    protected final AuthProxy authProxy;
 
-    protected BaseApiClient(String baseUrl, AuthCredentials authCredentials) {
+    protected BaseApiClient(String baseUrl, AuthCredentials authCredentials, AuthProxy pAuthProxy) {
         this.httpClient = HttpClientConfig.createHttpClient();
         this.baseUrl = baseUrl;
         this.authCredentials = authCredentials;
+        this.authProxy = pAuthProxy;
     }
 
     protected HttpRequest.Builder createRequestBuilder(String path) {
@@ -27,7 +30,10 @@ public class BaseApiClient {
                 .header("Content-Type", "application/json");
 
         if (authCredentials != null) {
-            builder.header("Authorization", authCredentials.getBasicAuthHeader());
+            builder.headers(
+                    "Authorization", authCredentials.getBasicAuthHeader(),
+                    "Proxy-Authorization", authProxy.getBasicAuthHeader()
+            );
         }
         return builder;
     }

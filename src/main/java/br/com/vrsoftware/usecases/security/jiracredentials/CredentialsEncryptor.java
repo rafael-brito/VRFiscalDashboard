@@ -1,6 +1,7 @@
-package br.com.vrsoftware.usecases.security;
+package br.com.vrsoftware.usecases.security.jiracredentials;
 
 import br.com.vrsoftware.exceptions.EncryptionException;
+import br.com.vrsoftware.usecases.security.IEncryptor;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -9,20 +10,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
 
-import static br.com.vrsoftware.usecases.security.SecureCredentialsLoader.generateKeyFromPassword;
+public class CredentialsEncryptor implements IEncryptor {
+    SecureCredentialsLoader credentialsLoader = new SecureCredentialsLoader();
 
-public class CredentialsEncryptor {
-    public static void createSecureCredentialsFile(String username, String password, String masterPassword) {
-        try {
+    @Override
+    public void createFile(String pMasterPassword, String... pParameters) {
+            try {
             // Create the config directory if it doesn't exist
             Path configDir = Paths.get(System.getProperty("user.dir"), "config");
             Files.createDirectories(configDir);
 
             // Generate key from master password
-            SecretKey key = generateKeyFromPassword(masterPassword);
+            SecretKey key = credentialsLoader.generateKeyFromPassword(pMasterPassword);
 
             // Prepare the credentials string
-            String credentials = username + ":" + password;
+            String credentials = pParameters[0] + ":" + pParameters[1];
 
             // Encrypt the credentials
             Cipher cipher = Cipher.getInstance("AES");
