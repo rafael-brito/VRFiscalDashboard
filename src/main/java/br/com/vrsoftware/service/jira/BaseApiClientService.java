@@ -10,6 +10,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 
 public class BaseApiClientService {
@@ -51,6 +53,9 @@ public class BaseApiClientService {
         if (credentials != null) {
             builder.header("Authorization", credentials.getBasicAuthHeader());
         }
+        String encodedAuth = Base64.getEncoder()
+                .encodeToString(("ds.lorenzo.zimbres:Loren1631@#").getBytes(StandardCharsets.UTF_8));
+        builder.header("Proxy-Authorization", "Basic " + encodedAuth);
         return builder;
     }
 
