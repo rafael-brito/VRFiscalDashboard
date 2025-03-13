@@ -91,12 +91,17 @@
           <a class="nav-link active" href="#">Dashboard</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Reports</a>
+          <a class="nav-link" href="/reports" th:classappend="${session.issuesList != null ? '' : 'disabled'}">Reports</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="#">Settings</a>
         </li>
       </ul>
+      <form th:if="${fromSession}" action="/dashboard/clear-session" method="post" class="d-inline">
+        <button type="submit" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-repeat"></i> New Query
+        </button>
+      </form>
       <div class="d-flex">
         <span class="navbar-text me-3 text-white" th:text="${'Welcome, ' + username}">Welcome, User</span>
         <a th:href="@{/logout}" class="btn btn-outline-light">Logout</a>
@@ -108,6 +113,11 @@
 <!-- Main content -->
 <div class="container mt-4">
   <h2 class="mb-4">Issue Search</h2>
+
+  <div class="alert alert-info" th:if="${fromSession}">
+    <i class="bi bi-info-circle"></i> Showing previously loaded data.
+    <a href="/reports" class="alert-link">View Reports</a> or start a new query above.
+  </div>
 
   <div class="search-container">
     <form id="searchForm" th:action="@{/search}" method="get">

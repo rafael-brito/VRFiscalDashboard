@@ -3,6 +3,7 @@ package br.com.vrsoftware.service.jira;
 import br.com.vrsoftware.dto.AuthCredentialsDTO;
 import br.com.vrsoftware.dto.jira.ProjectDTO;
 import br.com.vrsoftware.dto.jira.WorklogDTO;
+import br.com.vrsoftware.dto.jira.WorklogsDTO;
 import br.com.vrsoftware.dto.jira.issue.IssueDTO;
 import br.com.vrsoftware.exceptions.RequestException;
 import br.com.vrsoftware.service.JsonPathService;
@@ -43,9 +44,9 @@ public class DashboardApiClientService extends BaseApiClientService {
         return credentials;
     }
 
-    public IssueDTO getIssue(String issueId) {
+    public IssueDTO getIssue(String issueKey) {
         try {
-            String path = basePath + "/issue/" + issueId;
+            String path = basePath + "/issue/" + issueKey;
             HttpRequest request = createRequestBuilder(path, getCredentials())
                     .GET()
                     .build();
@@ -114,6 +115,24 @@ public class DashboardApiClientService extends BaseApiClientService {
 
             String issueIds = handleResponse(response, String.class);
             return jsonPathService.extractIssueIds(issueIds);
+        } catch (Exception e) {
+            throw new RequestException("Erro ao buscar dados do dashboard", e);
+        }
+    }
+
+    public WorklogsDTO getIssueWorklogs(String issueKey) {
+        try {
+            String path = basePath + "/issue/" + issueKey + "/worklog";
+            HttpRequest request = createRequestBuilder(path, getCredentials())
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+            return handleResponse(response, WorklogsDTO.class);
         } catch (Exception e) {
             throw new RequestException("Erro ao buscar dados do dashboard", e);
         }

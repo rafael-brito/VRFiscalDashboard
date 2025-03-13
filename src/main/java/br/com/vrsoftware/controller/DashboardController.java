@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
@@ -37,6 +38,13 @@ public class DashboardController {
         model.addAttribute("username", credentials.getEmail());
 
         return "dashboard";
+    }
+
+    @PostMapping("/dashboard/clear-session")
+    public String clearSession(HttpSession session) {
+        session.removeAttribute("issuesList");
+        session.removeAttribute("queryParams");
+        return "redirect:/dashboard";
     }
 
     @GetMapping("/search")
@@ -105,6 +113,9 @@ public class DashboardController {
         String jql = jqlBuilder.toString();
         List<IssueDTO> issues = getIssues(jiraService.getIssuesByQuery(jql));
 
+        // Store in session for reports page to access
+        session.setAttribute("issuesList", issues);
+
         // Add results to the model
         model.addAttribute("issues", issues);
 
@@ -116,6 +127,11 @@ public class DashboardController {
         List<IssueDTO> issues = new ArrayList<>();
         for (String issueId : issueIds) {
             IssueDTO issue = jiraService.getIssue(issueId);
+            issue.getFields()
+                    .getWorklog()
+                    .setWorklogs(
+                            jiraService.getIssueWorklogs(
+                                    issue.getKey()).getWorklogs());
             issues.add(issue);
         }
         return issues;

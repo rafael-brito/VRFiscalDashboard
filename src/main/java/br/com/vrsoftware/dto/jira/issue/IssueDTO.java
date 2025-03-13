@@ -1,19 +1,22 @@
 package br.com.vrsoftware.dto.jira.issue;
 
 import br.com.vrsoftware.config.ObjectMapperConfig;
+import br.com.vrsoftware.dto.CustomValuesDTO;
 import br.com.vrsoftware.dto.jira.ActorDTO;
 import br.com.vrsoftware.dto.jira.ProjectDTO;
 import br.com.vrsoftware.dto.jira.WorklogDTO;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class IssueDTO {
+public class IssueDTO implements Serializable {
 
     String id;
     String key;
     JiraFields fields;
+    CustomValuesDTO customValues = new CustomValuesDTO();
 
     public IssueDTO() { }
 
@@ -41,7 +44,15 @@ public class IssueDTO {
         this.fields = fields;
     }
 
-    public static class JiraFields {
+    public CustomValuesDTO getCustomValues() {
+        return customValues;
+    }
+
+    public void setCustomValues(CustomValuesDTO customValues) {
+        this.customValues = customValues;
+    }
+
+    public static class JiraFields implements Serializable {
 
         @JsonAlias("summary")
         @JsonProperty("title")
