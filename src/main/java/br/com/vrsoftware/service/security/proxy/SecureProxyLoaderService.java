@@ -36,24 +36,19 @@ public class SecureProxyLoaderService implements ISecureLoader<Properties> {
 
             String[] parts = decryptedContent.split(":");
 
-            Properties proxyProperties = new Properties();
-            for (int i = 0; i < parts.length; i++) {
-                if (i == 0) {
-                    proxyProperties.setProperty("http.proxyHost", parts[i]);
-                    proxyProperties.setProperty("https.proxyHost", parts[i]);
-                } else if (i == 1) {
-                    proxyProperties.setProperty("http.proxyPort", parts[i]);
-                    proxyProperties.setProperty("https.proxyPort", parts[i]);
-                } else if (i == 2) {
-                    proxyProperties.setProperty("http.proxyUser", parts[i]);
-                    proxyProperties.setProperty("https.proxyUser", parts[i]);
-                } else if (i == 3) {
-                    proxyProperties.setProperty("http.proxyPassword", parts[i]);
-                    proxyProperties.setProperty("https.proxyPassword", parts[i]);
-                }
+            if (parts.length < 4) {
+                throw new EncryptionException("Invalid proxy settings format", null);
             }
 
-//            proxyProperties.load(new java.io.StringReader(decryptedContent));
+            Properties proxyProperties = new Properties();
+            proxyProperties.setProperty("http.proxyHost", parts[0]);
+            proxyProperties.setProperty("https.proxyHost", parts[0]);
+            proxyProperties.setProperty("http.proxyPort", parts[1]);
+            proxyProperties.setProperty("https.proxyPort", parts[1]);
+            proxyProperties.setProperty("http.proxyUser", parts[2]);
+            proxyProperties.setProperty("https.proxyUser", parts[2]);
+            proxyProperties.setProperty("http.proxyPassword", parts[3]);
+            proxyProperties.setProperty("https.proxyPassword", parts[3]);
 
             return proxyProperties;
 
