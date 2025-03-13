@@ -53,6 +53,11 @@ public class HttpClientConfig {
                         System.setProperty("http.proxyPassword", proxyPassword);
                         System.setProperty("https.proxyUser", proxyUser);
                         System.setProperty("https.proxyPassword", proxyPassword);
+
+                        // Add Proxy-Authorization header
+                        String encodedAuth = Base64.getEncoder()
+                                .encodeToString((proxyUser + ":" + proxyPassword).getBytes(StandardCharsets.UTF_8));
+                        builder.header("Proxy-Authorization", "Basic " + encodedAuth);
                     }
                 }
             }
