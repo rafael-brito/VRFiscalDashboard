@@ -1,8 +1,11 @@
 package br.com.vrsoftware.controller;
 
 import br.com.vrsoftware.dto.AuthCredentialsDTO;
+import br.com.vrsoftware.dto.LoginValuesDTO;
+import br.com.vrsoftware.dto.SignUpValuesDTO;
 import br.com.vrsoftware.exceptions.AuthenticationException;
 import br.com.vrsoftware.service.security.SecureCredentialsLoaderService;
+import br.com.vrsoftware.service.security.SetupCredentialsService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,6 +15,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class LoginController {
+
+    private final SetupCredentialsService setupCredentialsService;
+
+    public LoginController(SetupCredentialsService setupCredentialsService) {
+        this.setupCredentialsService = setupCredentialsService;
+    }
 
     @GetMapping("/login")
     public String showLoginPage() {
@@ -23,41 +32,44 @@ public class LoginController {
         return "welcome";
     }
 
-    @PostMapping("/login")
-    public String processLogin(
-            @RequestParam(value = "loginType") String loginType,
+    @PostMapping("/signup")
+    public String signup(
             @RequestParam(value = "email", required = false) String email,
             @RequestParam(value = "jiraToken", required = false) String jiraToken,
-            @RequestParam(value = "masterPasswordForm", required = false) String masterPasswordForm,
-            @RequestParam(value = "masterPasswordFile", required = false) String masterPasswordFile,
+            @RequestParam(value = "masterPassword", required = false) String masterPassword,
             Model model,
             HttpSession session) {
 
         try {
-            AuthCredentialsDTO credentials = null;
+            SignUpValuesDTO signUpFormValues = new SignUpValuesDTO(email, jiraToken, masterPassword);
 
-            if ("form".equals(loginType)) {
-                // Process form-based login
-                boolean authenticated = authenticateWithFormCredentials(email, jiraToken, masterPasswordForm);
-                if (authenticated) {
-                    credentials = new AuthCredentialsDTO(email, jiraToken);
-                } else {
-                    model.addAttribute("message", "Invalid email or JIRA token");
-                    model.addAttribute("alertClass", "alert-danger");
-                    return "login";
-                }
-            } else if ("file".equals(loginType)) {
-                // Process file-based login
-                credentials = SecureCredentialsLoaderService.loadSecureCredentials(masterPasswordFile);
+            setupCredentialsService.signup(signUpFormValues);
 
-            } else {
-                model.addAttribute("message", "Invalid login method");
-                model.addAttribute("alertClass", "alert-danger");
-                return "login";
-            }
+            model.addAttribute("message", "Registration successful!");
+            model.addAttribute("alertClass", "alert-success");
+            return "login";
+        } catch (Exception e) {
+            model.addAttribute("message", "An error occurred during sign up: " + e.getMessage());
+            model.addAttribute("alertClass", "alert-danger");
+            return "login";
+        }
+    }
+
+    @PostMapping("/login")
+    public String processLogin(
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "masterPassword", required = false) String masterPassword,
+            Model model,
+            HttpSession session) {
+
+        try {
+            LoginValuesDTO loginValues = new LoginValuesDTO(email, masterPassword);
+
+            // Process file-based login
+            AuthCredentialsDTO authCredentials = SecureCredentialsLoaderService.loadSecureCredentials(loginValues);
 
             // Store credentials in session
-            session.setAttribute("userCredentials", credentials);
+            session.setAttribute("userCredentials", authCredentials);
 
             // Redirect to dashboard
             return "redirect:/dashboard";
@@ -70,10 +82,5 @@ public class LoginController {
             model.addAttribute("alertClass", "alert-danger");
             return "login";
         }
-    }
-
-    private boolean authenticateWithFormCredentials(String email, String jiraToken, String masterPassword) {
-        AuthCredentialsDTO credentials = new AuthCredentialsDTO(email, jiraToken);
-        return SecureCredentialsLoaderService.loadSecureCredentials(masterPassword).equals(credentials);
     }
 }
