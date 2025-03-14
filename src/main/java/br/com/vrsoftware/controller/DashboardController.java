@@ -101,13 +101,7 @@ public class DashboardController {
                     .append("\" OR description ~ \"").append(query).append("\")");
         }
 
-//        // Add default ordering
-//        if (jqlBuilder.length() > 0) {
-//            jqlBuilder.append(" ORDER BY priority DESC, created DESC");
-//        } else {
-//            // If no criteria were provided, get recent issues
-//            jqlBuilder.append("created >= -30d ORDER BY created DESC");
-//        }
+        // TODO: Ordering criteria.
 
         // Execute the search
         String jql = jqlBuilder.toString();
