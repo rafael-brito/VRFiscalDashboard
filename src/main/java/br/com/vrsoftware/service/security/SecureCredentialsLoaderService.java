@@ -1,8 +1,13 @@
 package br.com.vrsoftware.service.security;
 
 import br.com.vrsoftware.dto.AuthCredentialsDTO;
+import br.com.vrsoftware.dto.LoginValuesDTO;
+import br.com.vrsoftware.enums.MapName;
 import br.com.vrsoftware.exceptions.AuthenticationException;
 import br.com.vrsoftware.exceptions.EncryptionException;
+import br.com.vrsoftware.util.MapDB;
+import org.mapdb.Serializer;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -13,22 +18,24 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.Base64;
 
+@Service
 public class SecureCredentialsLoaderService {
-    private static final String CREDENTIALS_FILE = "secure-credentials.dat";
 
-    public static AuthCredentialsDTO loadSecureCredentials(String masterPassword) {
-        try {
-            Path credentialsPath = Paths.get(System.getProperty("user.dir"), "config", CREDENTIALS_FILE);
-
-            if (!credentialsPath.toFile().exists()) {
-                throw new AuthenticationException("Credentials file not found");
+    public static AuthCredentialsDTO loadSecureCredentials(LoginValuesDTO loginValues) {
+        try (MapDB<String, String> mapDB = new MapDB<>(
+            MapName.CREDENTIALS.getName(),
+            Serializer.STRING,
+            Serializer.STRING
+        )) {
+            if (!mapDB.containsKey(loginValues.getEmail())) {
+                throw new AuthenticationException("Credentials not found");
             }
 
             // Read encrypted content
-            byte[] encryptedData = Files.readAllBytes(credentialsPath);
+            String encryptedData = mapDB.get(loginValues.getEmail());
 
             // Generate key from master password
-            SecretKey key = generateKeyFromPassword(masterPassword);
+            SecretKey key = generateKeyFromPassword(loginValues.getMasterPassword());
 
             // Decrypt the data
             String decryptedContent = decrypt(encryptedData, key);
@@ -52,7 +59,7 @@ public class SecureCredentialsLoaderService {
         return new SecretKeySpec(hash, "AES");
     }
 
-    private static String decrypt(byte[] encryptedData, SecretKey key) throws Exception {
+    private static String decrypt(String encryptedData, SecretKey key) throws Exception {
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.DECRYPT_MODE, key);
         byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
