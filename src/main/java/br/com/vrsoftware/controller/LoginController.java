@@ -2,7 +2,8 @@ package br.com.vrsoftware.controller;
 
 import br.com.vrsoftware.dto.AuthCredentialsDTO;
 import br.com.vrsoftware.exceptions.AuthenticationException;
-import br.com.vrsoftware.service.security.SecureCredentialsLoaderService;
+import br.com.vrsoftware.service.security.credentials.SecureCredentialsLoaderService;
+import br.com.vrsoftware.service.security.proxy.SecureProxyLoaderService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,8 +11,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Properties;
+
 @Controller
 public class LoginController {
+
+    private SecureCredentialsLoaderService oSecureCredentialLoaderService = new SecureCredentialsLoaderService();
+    private SecureProxyLoaderService oSecureProxyService = new SecureProxyLoaderService();
 
     @GetMapping("/login")
     public String showLoginPage() {
@@ -30,6 +36,10 @@ public class LoginController {
             @RequestParam(value = "jiraToken", required = false) String jiraToken,
             @RequestParam(value = "masterPasswordForm", required = false) String masterPasswordForm,
             @RequestParam(value = "masterPasswordFile", required = false) String masterPasswordFile,
+            @RequestParam(value = "proxyHost", required = false) String proxyHost,
+            @RequestParam(value = "proxyPort", required = false) String proxyPort,
+            @RequestParam(value = "proxyUser", required = false) String proxyUser,
+            @RequestParam(value = "proxyPassword", required = false) String proxyPassword,
             Model model,
             HttpSession session) {
 
@@ -48,15 +58,14 @@ public class LoginController {
                 }
             } else if ("file".equals(loginType)) {
                 // Process file-based login
-                credentials = SecureCredentialsLoaderService.loadSecureCredentials(masterPasswordFile);
-
+                credentials = oSecureCredentialLoaderService.secureLoad(masterPasswordFile);
             } else {
                 model.addAttribute("message", "Invalid login method");
                 model.addAttribute("alertClass", "alert-danger");
                 return "login";
             }
 
-            // Store credentials in session
+            // Store credentials and proxy settings in session
             session.setAttribute("userCredentials", credentials);
 
             // Redirect to dashboard
@@ -74,6 +83,6 @@ public class LoginController {
 
     private boolean authenticateWithFormCredentials(String email, String jiraToken, String masterPassword) {
         AuthCredentialsDTO credentials = new AuthCredentialsDTO(email, jiraToken);
-        return SecureCredentialsLoaderService.loadSecureCredentials(masterPassword).equals(credentials);
+        return new SecureCredentialsLoaderService().secureLoad(masterPassword).equals(credentials);
     }
 }

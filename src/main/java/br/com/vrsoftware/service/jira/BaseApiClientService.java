@@ -10,6 +10,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 
 public class BaseApiClientService {
@@ -51,6 +53,16 @@ public class BaseApiClientService {
         if (credentials != null) {
             builder.header("Authorization", credentials.getBasicAuthHeader());
         }
+
+        // Ensure Proxy-Authorization header is correctly formatted
+        String proxyUser = System.getProperty("http.proxyUser");
+        String proxyPassword = System.getProperty("http.proxyPassword");
+        if (proxyUser != null && proxyPassword != null) {
+            String encodedAuth = Base64.getEncoder()
+                    .encodeToString((proxyUser + ":" + proxyPassword).getBytes(StandardCharsets.UTF_8));
+            builder.header("Proxy-Authorization", "Basic " + encodedAuth);
+        }
+
         return builder;
     }
 
@@ -60,6 +72,7 @@ public class BaseApiClientService {
             case 401 -> throw new RequestException("Erro de autenticação. Verifique suas credenciais.");
             case 403 -> throw new RequestException("Acesso negado. Você não tem permissão para acessar este recurso.");
             case 404 -> throw new RequestException("Recurso não encontrado.");
+            case 407 -> throw new RequestException("Proxy Authentication Required. Verifique suas credenciais de proxy.");
             default ->
                     throw new RequestException("Erro na requisição: " + response.statusCode() + " - " + response.body());
         };
