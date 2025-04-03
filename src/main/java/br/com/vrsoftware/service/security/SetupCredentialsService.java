@@ -1,8 +1,21 @@
 package br.com.vrsoftware.service.security;
 
+import br.com.vrsoftware.dto.SignUpValuesDTO;
+import org.springframework.stereotype.Service;
+
 import java.util.Scanner;
 
+@Service
 public class SetupCredentialsService {
+
+    public void signup(SignUpValuesDTO signUpValues) {
+        CredentialsEncryptorService.createSecureCredentialsFile(
+            signUpValues.getEmail(),
+            signUpValues.getJiraToken(),
+            signUpValues.getMasterPassword()
+        );
+    }
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
