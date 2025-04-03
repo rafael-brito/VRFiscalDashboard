@@ -1,19 +1,22 @@
 package br.com.vrsoftware.dto.jira.issue;
 
 import br.com.vrsoftware.config.ObjectMapperConfig;
+import br.com.vrsoftware.dto.CustomValuesDTO;
 import br.com.vrsoftware.dto.jira.ActorDTO;
 import br.com.vrsoftware.dto.jira.ProjectDTO;
 import br.com.vrsoftware.dto.jira.WorklogDTO;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class IssueDTO {
+public class IssueDTO implements Serializable {
 
     String id;
     String key;
     JiraFields fields;
+    CustomValuesDTO customValues = new CustomValuesDTO();
 
     public IssueDTO() { }
 
@@ -41,13 +44,22 @@ public class IssueDTO {
         this.fields = fields;
     }
 
-    public static class JiraFields {
+    public CustomValuesDTO getCustomValues() {
+        return customValues;
+    }
+
+    public void setCustomValues(CustomValuesDTO customValues) {
+        this.customValues = customValues;
+    }
+
+    public static class JiraFields implements Serializable {
 
         @JsonAlias("summary")
         @JsonProperty("title")
         String title;
         ActorDTO creator;
         ActorDTO reporter;
+        ActorDTO assignee;
         List<VRComponentDTO> components;
         StatusDTO status;
         @JsonAlias("customfield_10040")
@@ -55,6 +67,7 @@ public class IssueDTO {
         VersionDTO version;
         Worklog worklog;
         ProjectDTO project;
+        PriorityDTO priority;
 
         public JiraFields() {}
 
@@ -80,6 +93,14 @@ public class IssueDTO {
 
         public void setReporter(ActorDTO reporter) {
             this.reporter = reporter;
+        }
+
+        public ActorDTO getAssignee() {
+            return assignee;
+        }
+
+        public void setAssignee(ActorDTO assignee) {
+            this.assignee = assignee;
         }
 
         public List<VRComponentDTO> getComponents() {
@@ -120,6 +141,14 @@ public class IssueDTO {
 
         public void setProject(ProjectDTO project) {
             this.project = project;
+        }
+
+        public PriorityDTO getPriority() {
+            return priority;
+        }
+
+        public void setPriority(PriorityDTO priority) {
+            this.priority = priority;
         }
 
         @Override

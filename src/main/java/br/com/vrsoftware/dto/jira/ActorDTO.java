@@ -1,8 +1,8 @@
 package br.com.vrsoftware.dto.jira;
 
-import br.com.vrsoftware.exceptions.SerializationException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import br.com.vrsoftware.config.ObjectMapperConfig;
+
+import java.util.Objects;
 
 public class ActorDTO {
 
@@ -29,11 +29,19 @@ public class ActorDTO {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        ActorDTO actorDTO = (ActorDTO) o;
+        return Objects.equals(displayName, actorDTO.displayName) && Objects.equals(emailAddress, actorDTO.emailAddress);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(displayName, emailAddress);
+    }
+
+    @Override
     public String toString() {
-        try {
-            return new ObjectMapper().writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            throw new SerializationException("Falha ao serializar Actor.", e);
-        }
+        return ObjectMapperConfig.toJson(this);
     }
 }

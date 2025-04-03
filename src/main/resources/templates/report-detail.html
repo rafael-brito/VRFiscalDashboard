@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${reportType + ' - ' + issue.key}">Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f5f5f5;
+        }
+        .report-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .issue-header {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .chart-container {
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .action-buttons .btn {
+            margin-right: 10px;
+        }
+        .chart-image {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+<!-- Report Content -->
+<div class="container mt-4 mb-5">
+    <div class="report-container">
+        <!-- Report Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0" th:text="${reportType}">Report Type</h1>
+            <button class="btn btn-outline-secondary" onclick="window.print()">
+                <i class="bi bi-printer"></i> Print
+            </button>
+        </div>
+
+        <!-- Issue Details -->
+        <div class="issue-header">
+            <div class="row">
+                <div class="col-md-6">
+                    <h2>
+                        <span class="badge bg-secondary me-2" th:text="${issue.key}">PROJ-123</span>
+                        <span th:text="${issue.fields?.title}">Issue Summary</span>
+                    </h2>
+                </div>
+                <div class="col-md-6 d-flex justify-content-end align-items-center">
+
+                    <span class="badge rounded-pill me-2"
+                          th:text="${issue.fields?.status?.name}"
+                          th:classappend="${
+                            issue.fields?.status?.name == 'Done' ? 'bg-success' :
+                            issue.fields?.status?.name == 'In Progress' ? 'bg-info' :
+                            issue.fields?.status?.name == 'To Do' ? 'bg-secondary' : 'bg-warning'
+                          }">Status</span>
+
+                    <span class="badge bg-dark" th:text="${issue.fields?.priority?.name}">Priority</span>
+
+                    <!-- Add cost information with divider -->
+                    <div class="ms-3 border-start ps-3 d-flex align-items-center">
+                        <div class="d-flex flex-column align-items-end">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-clock me-1" title="Total development time"></i>
+                                <span th:text="${#numbers.formatDecimal(issue.customValues.issueTotalHours, 1, 2) + 'h'}">100.0h</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-currency-dollar me-1" title="Total development cost based on R$ 250,00/hour rate"></i>
+                                <span th:text="${'R$' + #numbers.formatDecimal(issue.customValues.issueDevelopmentCost, 0, 2)}">$2,500.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <p class="mb-1">
+                        <strong>Assignee:</strong>
+                        <span th:text="${issue.fields?.assignee?.displayName ?: 'Unassigned'}">John Doe</span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1">
+                        <strong>Reporter:</strong>
+                        <span th:text="${issue.fields?.reporter?.displayName ?: 'Unknown'}">Jane Smith</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Date and Info -->
+        <div class="alert alert-light">
+            <p class="mb-0">
+                <strong>Report generated:</strong> <span th:text="${#dates.format(#dates.createNow(), 'dd MMM yyyy HH:mm')}">01 Jan 2025 12:00</span>
+            </p>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title mb-0">Worklog Distribution by Actor</h3>
+            </div>
+            <div class="card-body">
+                <div class="chart-container text-center">
+                    <img th:if="${chartImage}" th:src="${chartImage}"
+                         class="chart-image" alt="Worklog Chart">
+                    <div th:if="${chartImage == null}" class="alert alert-warning">
+                        No worklog data available for this issue.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="card mb-4" th:if="${issue.fields?.worklog != null && issue.fields?.worklog.worklogs != null && !issue.fields?.worklog.worklogs.isEmpty()}">
+            <div class="card-header">
+                <h3 class="card-title mb-0">Worklog Details</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Date</th>
+                            <th>Time Spent</th>
+                            <th>Comment</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="worklog : ${issue.fields?.worklog.worklogs}">
+                            <td th:text="${worklog.author?.displayName}">John Doe</td>
+                            <td th:text="${worklog.customValues?.worklogFormattedStartDate}">01 Jan 2025</td>
+                            <td>
+                                <span th:text="${worklog.timeSpentSeconds + 's'}">1h 30m</span>
+                                <span class="text-muted"
+                                      th:text="${'(' + #numbers.formatDecimal(worklog.customValues?.worklogTimeSpentHours, 1, 2) + 'h)'}"></span>
+                            </td>
+                            <td th:text="${worklog.customValues?.worklogCommentText ?: '-'}">Fixed bug</td>
+                        </tr>
+                        </tbody>
+                        <tfoot>
+                        <tr class="table-active">
+                            <td colspan="2"><strong>Total</strong></td>
+                            <td>
+                                <strong th:text="${#numbers.formatDecimal(issue.customValues?.issueTotalHours, 1, 2) + 'h'}">10.5h</strong>
+                            </td>
+                            <td></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons d-flex justify-content-end">
+            <a th:href="@{'/reports/worklog/' + ${issue.key} + '/image'}"
+               class="btn btn-success" download>
+                <i class="bi bi-download"></i> Download Chart
+            </a>
+            <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#emailModal">
+                <i class="bi bi-envelope"></i> Email Report
+            </button>
+            <a href="/reports" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Reports
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal fade" id="emailModal" tabindex="-1" aria-labelledby="emailModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailModalLabel">Send Report via Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Email Form (placeholder - actual functionality would require backend implementation) -->
+                <form id="emailForm">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Recipient Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="subject"
+                               th:value="${reportType + ' for issue ' + issue.key}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendEmail()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Placeholder for email sending functionality
+    function sendEmail() {
+        const email = document.getElementById('email').value;
+        const subject = document.getElementById('subject').value;
+        const message = document.getElementById('message').value;
+
+        // This would typically be an AJAX call to a backend endpoint
+        alert(`Report would be sent to ${email} with subject: ${subject}`);
+
+        // Close modal after sending
+        const modal = bootstrap.Modal.getInstance(document.getElementById('emailModal'));
+        modal.hide();
+    }
+</script>
+</body>
+</html>

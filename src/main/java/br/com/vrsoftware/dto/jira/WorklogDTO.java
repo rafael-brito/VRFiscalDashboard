@@ -1,8 +1,10 @@
 package br.com.vrsoftware.dto.jira;
 
 import br.com.vrsoftware.config.ObjectMapperConfig;
+import br.com.vrsoftware.dto.CustomValuesDTO;
 
 import java.util.List;
+import java.util.Objects;
 
 public class WorklogDTO {
 
@@ -11,6 +13,8 @@ public class WorklogDTO {
     int timeSpentSeconds;
     ActorDTO author;
     Comment comment;
+    String started;
+    CustomValuesDTO customValues = new CustomValuesDTO();
 
     public WorklogDTO() {
     }
@@ -55,9 +59,43 @@ public class WorklogDTO {
         this.comment = comment;
     }
 
+    public String getStarted() {
+        return started;
+    }
+
+    public void setStarted(String started) {
+        this.started = started;
+    }
+
+    public CustomValuesDTO getCustomValues() {
+        return customValues;
+    }
+
+    public void setCustomValues(CustomValuesDTO customValues) {
+        this.customValues = customValues;
+    }
+
     @Override
     public String toString() {
         return ObjectMapperConfig.toJson(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        WorklogDTO that = (WorklogDTO) o;
+        return timeSpentSeconds == that.timeSpentSeconds
+                && Objects.equals(id, that.id)
+                && Objects.equals(issueId, that.issueId)
+                && Objects.equals(author, that.author)
+                && Objects.equals(comment, that.comment)
+                && Objects.equals(started, that.started)
+                && Objects.equals(customValues, that.customValues);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, issueId, timeSpentSeconds, author, comment, started, customValues);
     }
 
     public static class Comment {
