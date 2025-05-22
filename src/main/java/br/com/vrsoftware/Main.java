@@ -7,13 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Main {
 
     public static void main(String[] args) {
-//        AuthCredentialsDTO credentials = SecureCredentialsLoaderService
-//                .loadSecureCredentials(args[0]);
-//
-//        DashboardApiClientService client = new DashboardApiClientService(credentials);
-//
-//        System.out.println(client.getIssue());
-
         SpringApplication.run(Main.class, args);
     }
 }
