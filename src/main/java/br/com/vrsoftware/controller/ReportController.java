@@ -2,8 +2,10 @@ package br.com.vrsoftware.controller;
 
 import br.com.vrsoftware.dto.ReportTypeDTO;
 import br.com.vrsoftware.dto.jira.issue.IssueDTO;
+import br.com.vrsoftware.dto.plotting.CoverageDataDTO;
 import br.com.vrsoftware.service.jira.SummarizeService;
-import br.com.vrsoftware.service.plotting.PieChartService;
+import br.com.vrsoftware.service.plotting.WorklogChartService;
+import br.com.vrsoftware.service.plotting.coverage.CoverageChartService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -23,14 +25,17 @@ import java.util.List;
 @RequestMapping("/reports")
 public class ReportController {
 
-    private final PieChartService pieChartService;
+    private final WorklogChartService worklogChartService;
     private final SummarizeService summarizeService;
+    private final CoverageChartService coverageChartService;
 
     @Autowired
-    public ReportController(PieChartService pieChartService,
-                            SummarizeService summarizeService) {
-        this.pieChartService = pieChartService;
+    public ReportController(WorklogChartService worklogChartService,
+                            SummarizeService summarizeService,
+                            CoverageChartService coverageChartService) {
+        this.worklogChartService = worklogChartService;
         this.summarizeService = summarizeService;
+        this.coverageChartService = coverageChartService;
     }
 
     /**
@@ -43,16 +48,19 @@ public class ReportController {
         List<IssueDTO> issues = (List<IssueDTO>) session.getAttribute("issuesList");
 
         if (issues == null || issues.isEmpty()) {
-            return "redirect:/dashboard?error=No+issues+available+for+reporting";
+            issues = new ArrayList<>();
         }
 
         // Add report types
         List<ReportTypeDTO> reportTypes = new ArrayList<>();
         reportTypes.add(new ReportTypeDTO("worklog", "Worklog Distribution by Actor",
-                "View time spent by each team member on selected issues"));
+                "View time spent by each team member on selected issues", true));
+        reportTypes.add(new ReportTypeDTO("coverage", "Code Coverage by Month",
+                "View code coverage statistics for VRCore project", false));
 
         model.addAttribute("reportTypes", reportTypes);
         model.addAttribute("issues", issues);
+        model.addAttribute("coverageData", session.getAttribute("coverageData"));
 
         return "reports";
     }
@@ -75,10 +83,10 @@ public class ReportController {
         summarizeService.updateIssueDevelopmentCost(issue);
 
         // Generate chart as Base64 for embedding in HTML
-        String base64Chart = pieChartService.generateWorklogChartAsBase64(issue);
+        String base64Chart = worklogChartService.generateWorklogChartAsBase64(issue);
 
         model.addAttribute("issue", issue);
-        model.addAttribute("chartImage", "data:image/png;base64," + base64Chart);
+        model.addAttribute("worklogChartImage", "data:image/png;base64," + base64Chart);
         model.addAttribute("reportType", "Worklog Distribution");
 
         return "report-detail";
@@ -96,11 +104,45 @@ public class ReportController {
             return ResponseEntity.notFound().build();
         }
 
-        byte[] chartBytes = pieChartService.generateWorklogChartAsBytes(issue);
+        byte[] chartBytes = worklogChartService.generateWorklogChartAsBytes(issue);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.IMAGE_PNG);
         headers.setContentDispositionFormData("attachment", issueKey + "-worklog.png");
+
+        return new ResponseEntity<>(chartBytes, headers, HttpStatus.OK);
+    }
+
+
+    /**
+     * Generate coverage report
+     */
+    @GetMapping("/coverage")
+    public String generateCoverageReport(Model model, HttpSession session) {
+        // Generate chart as Base64 for embedding in HTML
+        List<CoverageDataDTO> coverageData = (List<CoverageDataDTO>) session.getAttribute("coverageData");
+        String base64Chart = coverageChartService.generateCoverageChartAsBase64(coverageData);
+
+        model.addAttribute("coverageChartImage", "data:image/png;base64," + base64Chart);
+        model.addAttribute("coverageData", coverageData);
+        model.addAttribute("alpha", 0.7);
+        model.addAttribute("filename", "coverageData.csv");
+        model.addAttribute("reportType", "Code Coverage Analysis");
+
+        return "report-detail";
+    }
+
+    /**
+     * Endpoint to get the chart as an image (for download)
+     */
+    @GetMapping("/coverage/image")
+    public ResponseEntity<byte[]> getCoverageChartImage(HttpSession session) {
+        List<CoverageDataDTO> coverageData = (List<CoverageDataDTO>) session.getAttribute("coverageData");
+        byte[] chartBytes = coverageChartService.generateCoverageChartAsImage(coverageData);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setContentDispositionFormData("attachment", "coverage.png");
 
         return new ResponseEntity<>(chartBytes, headers, HttpStatus.OK);
     }
