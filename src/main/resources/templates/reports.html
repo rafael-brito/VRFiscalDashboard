@@ -81,7 +81,7 @@
 
   <!-- Report Types Accordion -->
   <div class="accordion" id="reportTypeAccordion">
-    <!-- Worklog Report Section -->
+    <!-- Report Section -->
     <div class="accordion-item" th:each="reportType : ${reportTypes}">
       <h2 class="accordion-header" th:id="'heading-' + ${reportType.id}">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -89,7 +89,10 @@
                 th:aria-controls="'collapse-' + ${reportType.id}">
           <div class="d-flex justify-content-between align-items-center w-100">
             <span th:text="${reportType.name}">Report Name</span>
-            <span class="badge bg-primary rounded-pill me-2" th:text="${#lists.size(issues)}">10</span>
+            <!-- Show badge count only for issue-based reports -->
+            <span th:if="${reportType.requiresIssues}" class="badge bg-primary rounded-pill me-2" th:text="${#lists.size(issues)}">10</span>
+            <!-- For non-issue reports, show a different indicator if needed -->
+            <span th:unless="${reportType.requiresIssues}" class="badge bg-info rounded-pill me-2">Available</span>
           </div>
         </button>
       </h2>
@@ -99,11 +102,11 @@
         <div class="accordion-body">
           <p class="text-muted" th:text="${reportType.description}">Report description</p>
 
-          <!-- Issue Selection Table -->
-          <div class="card">
+          <!-- Issue Selection Table - Only for issue-based reports -->
+          <div th:if="${reportType.requiresIssues}" class="card">
             <div class="card-body">
               <div class="mb-3">
-                <button id="generateSelectedReport" class="btn btn-primary" disabled>
+                <button th:id="'generateSelectedReport-' + ${reportType.id}" class="btn btn-primary generate-selected-report" disabled>
                   <i class="bi bi-bar-chart-fill"></i> Generate Report for Selected Issues
                 </button>
               </div>
@@ -114,8 +117,8 @@
                   <tr>
                     <th>
                       <div class="form-check">
-                        <input class="form-check-input select-all-issues" type="checkbox" id="selectAll">
-                        <label class="form-check-label" for="selectAll">Select All</label>
+                        <input class="form-check-input select-all-issues" type="checkbox" th:id="'selectAll-' + ${reportType.id}">
+                        <label class="form-check-label" th:for="'selectAll-' + ${reportType.id}">Select All</label>
                       </div>
                     </th>
                     <th>Issue Key</th>
@@ -130,8 +133,8 @@
                       <div class="form-check">
                         <input class="form-check-input issue-checkbox" type="checkbox"
                                th:value="${issue.key}"
-                               th:id="'issue-' + ${issue.key}">
-                        <label class="form-check-label" th:for="'issue-' + ${issue.key}"></label>
+                               th:id="'issue-' + ${reportType.id} + '-' + ${issue.key}">
+                        <label class="form-check-label" th:for="'issue-' + ${reportType.id} + '-' + ${issue.key}"></label>
                       </div>
                     </td>
                     <td>
@@ -139,13 +142,13 @@
                     </td>
                     <td th:text="${issue.fields?.title}">Issue summary</td>
                     <td>
-                                                    <span class="badge rounded-pill"
-                                                          th:text="${issue.fields?.status?.name}"
-                                                          th:classappend="${
-                                                            issue.fields?.status?.name == 'Done' ? 'bg-success' :
-                                                            issue.fields?.status?.name == 'In Progress' ? 'bg-info' :
-                                                            issue.fields?.status?.name == 'To Do' ? 'bg-secondary' : 'bg-warning'
-                                                          }">Status</span>
+                      <span class="badge rounded-pill"
+                            th:text="${issue.fields?.status?.name}"
+                            th:classappend="${
+                              issue.fields?.status?.name == 'Done' ? 'bg-success' :
+                              issue.fields?.status?.name == 'In Progress' ? 'bg-info' :
+                              issue.fields?.status?.name == 'To Do' ? 'bg-secondary' : 'bg-warning'
+                            }">Status</span>
                     </td>
                     <td>
                       <a th:href="@{'/reports/worklog/' + ${issue.key}}"
@@ -157,6 +160,104 @@
                   </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Code Coverage Report - Non-issue based report -->
+          <div th:if="${reportType.id == 'coverage'}" class="card">
+            <div class="card-body">
+              <div class="mb-3 d-flex justify-content-between align-items-center">
+                <a href="/reports/coverage" class="btn btn-primary" target="_blank">
+                  <i class="bi bi-bar-chart-fill"></i> View Detailed Coverage Report
+                </a>
+
+                <!-- Export options -->
+                <div class="dropdown">
+                  <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-download"></i> Export
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                    <li><a class="dropdown-item" href="/reports/coverage/export?format=pdf">PDF Report</a></li>
+                    <li><a class="dropdown-item" href="/reports/coverage/export?format=csv">CSV Data</a></li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Compact coverage summary chart -->
+              <div class="mb-4" style="height: 200px;">
+                <canvas id="coverageSummaryChart"></canvas>
+              </div>
+
+              <!-- Coverage data table -->
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Estimated</th>
+                    <th>Executed</th>
+                    <th>Forecasted</th>
+                    <th>Status</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr th:each="entry : ${coverageData}" th:with="gap=${entry.estimatedPercentage - entry.executedPercentage}">
+                    <td th:text="${entry.month}">Jan 2025</td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                          <div class="progress-bar bg-info" role="progressbar"
+                               th:style="'width: ' + ${entry.estimatedPercentage} + '%'"
+                               th:aria-valuenow="${entry.estimatedPercentage}"
+                               aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <span th:text="${#numbers.formatDecimal(entry.estimatedPercentage, 1, 1)} + '%'">85.0%</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                          <div class="progress-bar" role="progressbar"
+                               th:style="'width: ' + ${entry.executedPercentage} + '%'"
+                               th:aria-valuenow="${entry.executedPercentage}"
+                               aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <span th:text="${#numbers.formatDecimal(entry.executedPercentage, 1, 1)} + '%'">78.5%</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                          <div class="progress-bar bg-warning" role="progressbar"
+                               th:style="'width: ' + ${entry.forecastedPercentage} + '%'"
+                               th:aria-valuenow="${entry.forecastedPercentage}"
+                               aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <span th:text="${#numbers.formatDecimal(entry.forecastedPercentage, 1, 1)} + '%'">92.0%</span>
+                      </div>
+                    </td>
+                    <td>
+              <span class="badge rounded-pill"
+                    th:classappend="${gap <= 0 ? 'bg-success' : (gap <= 5 ? 'bg-warning' : 'bg-danger')}"
+                    th:text="${gap <= 0 ? 'On Target' : (gap <= 5 ? 'Near Target' : 'Gap ' + #numbers.formatDecimal(gap, 1, 1) + '%')}">
+                Status
+              </span>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Legend and explanation -->
+              <div class="mt-3 small text-muted">
+                <div class="mb-1"><span class="badge bg-info me-1">&nbsp;</span> Estimated Coverage Target</div>
+                <div class="mb-1"><span class="badge bg-primary me-1">&nbsp;</span> Actual Executed Coverage</div>
+                <div class="mb-1"><span class="badge bg-warning me-1">&nbsp;</span> Forecasted Coverage</div>
+                <div class="mt-2">
+                  <i class="bi bi-info-circle"></i>
+                  Coverage data shows progress toward meeting code coverage goals by month.
+                </div>
               </div>
             </div>
           </div>
@@ -174,13 +275,14 @@
           checkbox.addEventListener('change', function(e) {
               const table = e.target.closest('table');
               const isChecked = e.target.checked;
+              const reportTypeId = table.id.split('-')[2]; // Get the report type ID
 
               table.querySelectorAll('.issue-checkbox').forEach(function(issueCheckbox) {
                   issueCheckbox.checked = isChecked;
               });
 
               // Enable/disable generate button
-              updateGenerateButton(table);
+              updateGenerateButton(table, reportTypeId);
           });
       });
 
@@ -188,7 +290,9 @@
       document.querySelectorAll('.issue-checkbox').forEach(function(checkbox) {
           checkbox.addEventListener('change', function(e) {
               const table = e.target.closest('table');
-              updateGenerateButton(table);
+              const reportTypeId = table.id.split('-')[2]; // Get the report type ID
+
+              updateGenerateButton(table, reportTypeId);
 
               // Update "Select All" checkbox
               const allCheckboxes = table.querySelectorAll('.issue-checkbox');
@@ -199,10 +303,10 @@
       });
 
       // Enable/disable generate button based on selections
-      function updateGenerateButton(table) {
-          const tableId = table.id;
-          const reportType = tableId.replace('issues-table-', '');
-          const button = document.getElementById('generateSelectedReport');
+      function updateGenerateButton(table, reportTypeId) {
+          const button = document.getElementById('generateSelectedReport-' + reportTypeId);
+
+          if (!button) return; // Skip if button doesn't exist for this report
 
           const selectedCheckboxes = table.querySelectorAll('.issue-checkbox:checked');
           button.disabled = selectedCheckboxes.length === 0;
@@ -212,9 +316,57 @@
               const selectedIssues = Array.from(selectedCheckboxes).map(cb => cb.value);
               button.onclick = function() {
                   // Open report in new window for multiple issues
-                  const reportUrl = `/reports/${reportType}/multiple?issues=${selectedIssues.join(',')}`;
+                  const reportUrl = `/reports/${reportTypeId}/multiple?issues=${selectedIssues.join(',')}`;
                   window.open(reportUrl, '_blank');
               };
+          }
+      }
+
+      // Code Coverage Report Date Range Handler
+      const startMonthInput = document.getElementById('startMonth');
+      const endMonthInput = document.getElementById('endMonth');
+      const projectSelector = document.getElementById('projectSelector');
+      const codeCoverageButton = document.querySelector('a[href="/reports/code-coverage"]');
+
+      if (startMonthInput && endMonthInput && projectSelector && codeCoverageButton) {
+          // Set default end month to current month
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = (now.getMonth() + 1).toString().padStart(2, '0');
+          endMonthInput.value = `${year}-${month}`;
+
+          // Set default start month to 12 months ago
+          const startDate = new Date();
+          startDate.setMonth(now.getMonth() - 11);
+          const startYear = startDate.getFullYear();
+          const startMonth = (startDate.getMonth() + 1).toString().padStart(2, '0');
+          startMonthInput.value = `${startYear}-${startMonth}`;
+
+          // Update URL when parameters change
+          [startMonthInput, endMonthInput, projectSelector].forEach(input => {
+              input.addEventListener('change', updateCodeCoverageUrl);
+          });
+
+          // Initial URL setup
+          updateCodeCoverageUrl();
+
+          function updateCodeCoverageUrl() {
+              const startMonth = startMonthInput.value;
+              const endMonth = endMonthInput.value;
+              const project = projectSelector.value;
+
+              let url = '/reports/code-coverage';
+              const params = [];
+
+              if (startMonth) params.push(`startMonth=${startMonth}`);
+              if (endMonth) params.push(`endMonth=${endMonth}`);
+              if (project) params.push(`project=${project}`);
+
+              if (params.length > 0) {
+                  url += '?' + params.join('&');
+              }
+
+              codeCoverageButton.href = url;
           }
       }
   });
