@@ -1,10 +1,9 @@
 package br.com.vrsoftware.controller;
 
 import br.com.vrsoftware.dto.ReportTypeDTO;
-import br.com.vrsoftware.dto.jira.WorklogDTO;
 import br.com.vrsoftware.dto.jira.issue.IssueDTO;
+import br.com.vrsoftware.service.jira.SummarizeService;
 import br.com.vrsoftware.service.plotting.PieChartService;
-import br.com.vrsoftware.util.CommentTextExtractor;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -13,25 +12,25 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Controller
 @RequestMapping("/reports")
 public class ReportController {
 
-    private static final double HOURLY_RATE = 25.0;
-
     private final PieChartService pieChartService;
+    private final SummarizeService summarizeService;
 
     @Autowired
-    public ReportController(PieChartService pieChartService) {
+    public ReportController(PieChartService pieChartService,
+                            SummarizeService summarizeService) {
         this.pieChartService = pieChartService;
+        this.summarizeService = summarizeService;
     }
 
     /**
@@ -70,10 +69,10 @@ public class ReportController {
             return "redirect:/reports?error=Issue+not+found";
         }
 
-        updateWorklogExtractedText(issue);
-        updateWorklogStartedTime(issue);
-        updateIssueTotalHours(issue);
-        updateIssueDevelopmentCost(issue);
+        summarizeService.updateWorklogExtractedText(issue);
+        summarizeService.updateWorklogStartedTime(issue);
+        summarizeService.updateIssueTotalHours(issue);
+        summarizeService.updateIssueDevelopmentCost(issue);
 
         // Generate chart as Base64 for embedding in HTML
         String base64Chart = pieChartService.generateWorklogChartAsBase64(issue);
@@ -104,35 +103,5 @@ public class ReportController {
         headers.setContentDispositionFormData("attachment", issueKey + "-worklog.png");
 
         return new ResponseEntity<>(chartBytes, headers, HttpStatus.OK);
-    }
-
-    private void updateWorklogExtractedText(IssueDTO issue) {
-        for (WorklogDTO worklog : issue.getFields().getWorklog().getWorklogs()) {
-            worklog.getCustomValues().setWorklogCommentText(CommentTextExtractor.extractText(worklog.getComment()));
-        }
-    }
-
-    private void updateWorklogStartedTime(IssueDTO issue) {
-        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy", new Locale("pt", "BR"));
-        for (WorklogDTO worklog : issue.getFields().getWorklog().getWorklogs()) {
-            OffsetDateTime dateTime = OffsetDateTime.parse(worklog.getStarted(), inputFormatter);
-            worklog.getCustomValues().setWorklogFormattedStartDate(dateTime.format(outputFormatter));
-        }
-    }
-
-    private void updateIssueTotalHours(IssueDTO issue) {
-        for (WorklogDTO worklog : issue.getFields().getWorklog().getWorklogs()) {
-            worklog.getCustomValues().setWorklogTimeSpentHours(worklog.getTimeSpentSeconds() / 3600.0);
-        }
-        double totalHours = issue.getFields().getWorklog().getWorklogs().stream()
-                .mapToDouble(x -> x.getCustomValues().getWorklogTimeSpentHours()).sum();
-        issue.getCustomValues().setIssueTotalHours(totalHours);
-    }
-
-    private void updateIssueDevelopmentCost(IssueDTO issue) {
-        issue.getCustomValues().setIssueHourlyRate(HOURLY_RATE);
-        double totalCost = issue.getCustomValues().getIssueTotalHours() * issue.getCustomValues().getIssueHourlyRate();
-        issue.getCustomValues().setIssueDevelopmentCost(totalCost);
     }
 }
