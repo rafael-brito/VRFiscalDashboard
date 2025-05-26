@@ -58,9 +58,19 @@ public class ReportController {
         reportTypes.add(new ReportTypeDTO("coverage", "Code Coverage by Month",
                 "View code coverage statistics for VRCore project", false));
 
+        // Get coverage data and calculate forecast
+        @SuppressWarnings("unchecked")
+        List<CoverageDataDTO> coverageData = (List<CoverageDataDTO>) session.getAttribute("coverageData");
+        if (coverageData != null && !coverageData.isEmpty()) {
+            // Calculate forecast when loading the page
+            coverageChartService.getCoverageStatisticsService().calculateEMAForecast(coverageData, 0.8);
+            // Update the session with the new forecasted data
+            session.setAttribute("coverageData", coverageData);
+        }
+
         model.addAttribute("reportTypes", reportTypes);
         model.addAttribute("issues", issues);
-        model.addAttribute("coverageData", session.getAttribute("coverageData"));
+        model.addAttribute("coverageData", coverageData);
 
         return "reports";
     }
@@ -121,7 +131,19 @@ public class ReportController {
     public String generateCoverageReport(Model model, HttpSession session) {
         // Generate chart as Base64 for embedding in HTML
         List<CoverageDataDTO> coverageData = (List<CoverageDataDTO>) session.getAttribute("coverageData");
+
+        if (coverageData == null || coverageData.isEmpty()) {
+            return "redirect:/reports?error=No+coverage+data+available";
+        }
+
+        // Calculate forecast
+        coverageChartService.getCoverageStatisticsService().calculateEMAForecast(coverageData, 0.8);
+
+        // Generate chart
         String base64Chart = coverageChartService.generateCoverageChartAsBase64(coverageData);
+
+        // Update session with the new forecasted data
+        session.setAttribute("coverageData", coverageData);
 
         model.addAttribute("coverageChartImage", "data:image/png;base64," + base64Chart);
         model.addAttribute("coverageData", coverageData);

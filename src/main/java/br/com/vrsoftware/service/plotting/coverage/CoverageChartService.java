@@ -24,15 +24,18 @@ public class CoverageChartService {
 
     private static final double DEFAULT_ALPHA_EMA = 0.8;
 
-    private static final Color EXECUTED_COLOR = new Color(41, 128, 185); // Blue
-    private static final Color FORECASTED_COLOR = new Color(41, 128, 185, 130); // Semi-transparent blue
-    private static final Color ESTIMATED_COLOR = new Color(192, 57, 43); // Red
-    private static final Color ESTIMATED_FORECASTED_COLOR = new Color(192, 57, 43, 130); // Semi-transparent red
+    private static final Color EXECUTED_COLOR = new Color(0, 102, 204); // Dark Blue
+    private static final Color FORECASTED_COLOR = new Color(255, 204, 0); // Yellow
+    private static final Color ESTIMATED_COLOR = new Color(0, 204, 204); // Cyan
 
     private static final int DEFAULT_WIDTH = 600;
     private static final int DEFAULT_HEIGHT = 400;
 
     private final CoverageStatisticsService coverageStatisticsService = new CoverageStatisticsService();
+
+    public CoverageStatisticsService getCoverageStatisticsService() {
+        return this.coverageStatisticsService;
+    }
 
     public String generateCoverageChartAsBase64(List<CoverageDataDTO> coverageData) {
         JFreeChart chart = generateChart(coverageData);
