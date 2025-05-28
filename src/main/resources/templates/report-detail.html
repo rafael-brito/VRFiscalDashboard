@@ -322,11 +322,13 @@
                     <div class="mb-3">
                         <label for="subject" class="form-label">Subject</label>
                         <input type="text" class="form-control" id="subject"
-                               th:value="${reportType + (issue != null ? ' for issue ' + issue.key : ' Report')}">
+                               th:value="${reportType + (issue != null ? ' for issue ' + issue.key : ' Report')}" required>
+                        <input id="issueKey" type="hidden" th:if="${issue != null}" th:value="${issue.key}"/>
                     </div>
                     <div class="mb-3">
                         <label for="message" class="form-label">Message</label>
-                        <textarea class="form-control" id="message" rows="3"></textarea>
+                        <textarea class="form-control" id="message" rows="3"
+                                  th:text="${'Please find attached the ' + reportType + ' report.'}" required></textarea>
                     </div>
                 </form>
             </div>
@@ -340,19 +342,49 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Placeholder for email sending functionality
     function sendEmail() {
-        const email = document.getElementById('email').value;
-        const subject = document.getElementById('subject').value;
-        const message = document.getElementById('message').value;
+     const email = document.getElementById('email').value;
+     const subject = document.getElementById('subject').value;
+     const message = document.getElementById('message').value;
+     const issueKey = document.getElementById('issueKey')?.value; // Make it optional
 
-        // This would typically be an AJAX call to a backend endpoint
-        alert(`Report would be sent to ${email} with subject: ${subject}`);
+     // Determine which endpoint to use based on the report type
+     const endpoint = subject.includes('Coverage')
+         ? '/reports/send-email-coverage'
+         : '/reports/send-email-worklog';
 
-        // Close modal after sending
-        const modal = bootstrap.Modal.getInstance(document.getElementById('emailModal'));
-        modal.hide();
-    }
+     // Prepare the request body
+     const requestBody = {
+         to: email,
+         subject: subject,
+         message: message
+     };
+
+     // Add issueKey as query parameter for worklog reports
+     const url = !subject.includes('Coverage') && issueKey
+         ? `${endpoint}?issueKey=${encodeURIComponent(issueKey)}`
+         : endpoint;
+
+     fetch(url, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(requestBody)
+     })
+     .then(response => {
+         if (!response.ok) {
+             throw new Error('Network response was not ok');
+         }
+         return response.text();
+     })
+     .then(data => {
+         alert(data);
+         const modal = bootstrap.Modal.getInstance(document.getElementById('emailModal'));
+         modal.hide();
+     })
+     .catch(error => {
+         alert('Error sending email: ' + error.message);
+     });
+ }
 </script>
 </body>
 </html>

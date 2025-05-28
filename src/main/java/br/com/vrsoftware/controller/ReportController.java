@@ -3,6 +3,8 @@ package br.com.vrsoftware.controller;
 import br.com.vrsoftware.dto.ReportTypeDTO;
 import br.com.vrsoftware.dto.jira.issue.IssueDTO;
 import br.com.vrsoftware.dto.plotting.CoverageDataDTO;
+import br.com.vrsoftware.request.EmailRequest;
+import br.com.vrsoftware.service.Email.EmailService;
 import br.com.vrsoftware.service.jira.SummarizeService;
 import br.com.vrsoftware.service.plotting.WorklogChartService;
 import br.com.vrsoftware.service.plotting.coverage.CoverageChartService;
@@ -14,10 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-
+import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,14 +27,17 @@ public class ReportController {
     private final WorklogChartService worklogChartService;
     private final SummarizeService summarizeService;
     private final CoverageChartService coverageChartService;
+    private final EmailService emailService;
 
     @Autowired
     public ReportController(WorklogChartService worklogChartService,
                             SummarizeService summarizeService,
-                            CoverageChartService coverageChartService) {
+                            CoverageChartService coverageChartService,
+                            EmailService emailService) {
         this.worklogChartService = worklogChartService;
         this.summarizeService = summarizeService;
         this.coverageChartService = coverageChartService;
+        this.emailService = emailService;
     }
 
     /**
@@ -167,5 +169,80 @@ public class ReportController {
         headers.setContentDispositionFormData("attachment", "coverage.png");
 
         return new ResponseEntity<>(chartBytes, headers, HttpStatus.OK);
+    }
+
+    @PostMapping("/send-email-coverage")
+    @ResponseBody
+    public ResponseEntity<String> sendReportEmailCoverage(@RequestBody EmailRequest emailRequest, HttpSession session) {
+        String subject = emailRequest.getSubject();
+        String message = emailRequest.getMessage();
+
+        try {
+            if (subject != null && subject.contains("Coverage")) {
+                @SuppressWarnings("unchecked")
+                List<CoverageDataDTO> coverageData = (List<CoverageDataDTO>) session.getAttribute("coverageData");
+                if (coverageData == null || coverageData.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nenhum dado de coverage encontrado.");
+                }
+                byte[] chartBytes = coverageChartService.generateCoverageChartAsImage(coverageData);
+
+                emailService.sendEmailWithAttachment(
+                        emailRequest.getTo(),
+                        subject,
+                        message + "\n\nSegue em anexo o gráfico de cobertura.",
+                        chartBytes,
+                        "coverage.png"
+                );
+                return ResponseEntity.ok("E-mail enviado com gráfico de coverage em anexo!");
+            }
+            else {
+                emailService.sendEmail(emailRequest.getTo(), subject, message);
+                return ResponseEntity.ok("E-mail enviado com sucesso!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar e-mail: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/send-email-worklog")
+    @ResponseBody
+    public ResponseEntity<String> sendReportEmailWorklog(@RequestBody EmailRequest emailRequest, HttpSession session, String issueKey) {
+        String subject = emailRequest.getSubject();
+        String message = emailRequest.getMessage();
+
+        try {
+            if (subject != null && issueKey != null) {
+                @SuppressWarnings("unchecked")
+                List<IssueDTO> issues = (List<IssueDTO>) session.getAttribute("issuesList");
+                if (issues == null || issues.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nenhuma lista de issues encontrada na sessão.");
+                }
+
+                IssueDTO issue = issues.stream().filter(x -> x.getKey().trim().equalsIgnoreCase(issueKey.trim())).findAny().orElse(null);
+                if (issue == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Issue não encontrada.");
+                }
+
+                byte[] chartBytes = worklogChartService.generateWorklogChartAsBytes(issue);
+
+                StringBuilder sb = new StringBuilder(message);
+
+                emailService.sendEmailWithAttachment(
+                        emailRequest.getTo(),
+                        subject,
+                        sb.toString() + "\n\nSegue em anexo o gráfico do Worklog.",
+                        chartBytes,
+                        "worklog-" + issue.getKey() + ".png"
+                );
+                return ResponseEntity.ok("E-mail enviado com gráfico de worklog em anexo!");
+            } else {
+                emailService.sendEmail(emailRequest.getTo(), subject, message);
+                return ResponseEntity.ok("E-mail enviado com sucesso!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar e-mail: " + e.getMessage());
+        }
     }
 }
