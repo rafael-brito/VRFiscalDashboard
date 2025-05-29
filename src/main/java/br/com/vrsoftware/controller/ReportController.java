@@ -171,6 +171,9 @@ public class ReportController {
         return new ResponseEntity<>(chartBytes, headers, HttpStatus.OK);
     }
 
+    /**
+     * Endpoint to send coverage report by way of email
+     */
     @PostMapping("/send-email-coverage")
     @ResponseBody
     public ResponseEntity<String> sendReportEmailCoverage(@RequestBody EmailRequest emailRequest, HttpSession session) {
@@ -205,6 +208,9 @@ public class ReportController {
         }
     }
 
+    /**
+     * Endpoint to send worklog report by way of email
+     */
     @PostMapping("/send-email-worklog")
     @ResponseBody
     public ResponseEntity<String> sendReportEmailWorklog(@RequestBody EmailRequest emailRequest, HttpSession session, String issueKey) {
@@ -246,6 +252,9 @@ public class ReportController {
         }
     }
 
+    /**
+     * Endpoint to generate report with multiple issues
+     */
     @GetMapping("/worklog/multiple")
     public String generateMultipleWorklogReports(@RequestParam String issues, Model model, HttpSession session) {
         List<IssueDTO> allIssues = (List<IssueDTO>) session.getAttribute("issuesList");
