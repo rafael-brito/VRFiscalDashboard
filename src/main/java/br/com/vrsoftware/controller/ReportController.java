@@ -17,8 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/reports")
@@ -124,7 +125,6 @@ public class ReportController {
 
         return new ResponseEntity<>(chartBytes, headers, HttpStatus.OK);
     }
-
 
     /**
      * Generate coverage report
@@ -244,5 +244,42 @@ public class ReportController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar e-mail: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/worklog/multiple")
+    public String generateMultipleWorklogReports(@RequestParam String issues, Model model, HttpSession session) {
+        List<IssueDTO> allIssues = (List<IssueDTO>) session.getAttribute("issuesList");
+        if (allIssues == null || allIssues.isEmpty()) {
+            return "redirect:/reports?error=No+issues+found+in+session";
+        }
+
+        // Split the issues parameter and get the selected issues
+        List<String> selectedIssueKeys = Arrays.asList(issues.split(","));
+        List<IssueDTO> selectedIssues = allIssues.stream()
+                .filter(issue -> selectedIssueKeys.contains(issue.getKey()))
+                .collect(Collectors.toList());
+
+        if (selectedIssues.isEmpty()) {
+            return "redirect:/reports?error=Selected+issues+not+found";
+        }
+
+        selectedIssues.forEach(issue -> {
+            summarizeService.updateWorklogExtractedText(issue);
+            summarizeService.updateWorklogStartedTime(issue);
+            summarizeService.updateIssueTotalHours(issue);
+            summarizeService.updateIssueDevelopmentCost(issue);
+        });
+        
+        Map<String, String> worklogCharts = new HashMap<>();
+        for (IssueDTO issue : selectedIssues) {
+            String base64Chart = worklogChartService.generateWorklogChartAsBase64(issue);
+            worklogCharts.put(issue.getKey(), "data:image/png;base64," + base64Chart);
+        }
+
+        model.addAttribute("issues", selectedIssues);
+        model.addAttribute("worklogCharts", worklogCharts);
+        model.addAttribute("reportType", "Multiple Worklog Distribution");
+
+        return "report-multiple";
     }
 }
