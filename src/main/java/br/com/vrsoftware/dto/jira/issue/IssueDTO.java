@@ -74,6 +74,9 @@ public class IssueDTO implements Serializable {
         @JsonAlias("customfield_10118")
         @JsonProperty("tester")
         ActorDTO tester;
+        @JsonAlias("customfield_10026")
+        @JsonProperty("storyPoints")
+        String storyPoints;
 
         public JiraFields() {}
 
@@ -171,6 +174,14 @@ public class IssueDTO implements Serializable {
 
         public void setTester(ActorDTO tester) {
             this.tester = tester;
+        }
+
+        public String getStoryPoints() {
+            return storyPoints;
+        }
+
+        public void setStoryPoints(String storyPoints) {
+            this.storyPoints = storyPoints;
         }
 
         @Override

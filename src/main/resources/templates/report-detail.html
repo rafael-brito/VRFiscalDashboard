@@ -59,6 +59,7 @@
                     </h2>
                 </div>
                 <div class="col-md-6 d-flex justify-content-end align-items-center">
+                    <span class="badge bg-secondary me-2" th:text="${issue.fields?.storyPoints.replace('.0', ' sp') ?: '?'}">Story Points</span>
                     <span class="badge rounded-pill me-2"
                           th:text="${issue.fields?.status?.name}"
                           th:classappend="${
