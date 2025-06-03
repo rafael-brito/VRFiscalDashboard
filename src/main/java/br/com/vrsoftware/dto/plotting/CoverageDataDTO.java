@@ -5,9 +5,9 @@ import br.com.vrsoftware.config.ObjectMapperConfig;
 import java.util.Objects;
 
 public class CoverageDataDTO {
-    private final String month;
-    private final double estimatedPercentage;
-    private final double executedPercentage;
+    private String month;
+    private double estimatedPercentage;
+    private double executedPercentage;
     private double forecastedPercentage;
 
     public CoverageDataDTO(String month, double estimatedPercentage, double executedPercentage) {
@@ -20,20 +20,36 @@ public class CoverageDataDTO {
         return month;
     }
 
+    public CoverageDataDTO setMonth(String month) {
+        this.month = month;
+        return this;
+    }
+
     public double getEstimatedPercentage() {
         return estimatedPercentage;
+    }
+
+    public CoverageDataDTO setEstimatedPercentage(double estimatedPercentage) {
+        this.estimatedPercentage = estimatedPercentage;
+        return this;
     }
 
     public double getExecutedPercentage() {
         return executedPercentage;
     }
 
+    public CoverageDataDTO setExecutedPercentage(double executedPercentage) {
+        this.executedPercentage = executedPercentage;
+        return this;
+    }
+
     public double getForecastedPercentage() {
         return forecastedPercentage;
     }
 
-    public void setForecastedPercentage(double forecastedPercentage) {
+    public CoverageDataDTO setForecastedPercentage(double forecastedPercentage) {
         this.forecastedPercentage = forecastedPercentage;
+        return this;
     }
 
     @Override

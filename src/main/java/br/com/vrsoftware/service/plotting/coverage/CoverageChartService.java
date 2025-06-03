@@ -82,12 +82,12 @@ public class CoverageChartService {
             String month = data.getMonth();
 
             // Add executed percentage (only if > 0)
-            if (data.getExecutedPercentage() > 0) {
+            if (data.getExecutedPercentage() >= 0) {
                 dataset.addValue(data.getExecutedPercentage(), "Executed", month);
             }
 
             // Add estimated percentage (only if > 0)
-            if (data.getEstimatedPercentage() > 0) {
+            if (data.getEstimatedPercentage() >= 0) {
                 dataset.addValue(data.getEstimatedPercentage(), "Estimated", month);
             }
 
@@ -139,15 +139,16 @@ public class CoverageChartService {
                 .min()
                 .orElse(0);
 
-        double maxValue = data.stream()
-                .mapToDouble(d -> Math.max(
-                        d.getExecutedPercentage(),
-                        Math.max(d.getEstimatedPercentage(), d.getForecastedPercentage())))
-                .max()
-                .orElse(100);
+        double maxValue = 100;
+//                data.stream()
+//                .mapToDouble(d -> Math.max(
+//                        d.getExecutedPercentage(),
+//                        Math.max(d.getEstimatedPercentage(), d.getForecastedPercentage())))
+//                .max()
+//                .orElse(100);
 
         // Set range with padding
-        rangeAxis.setRange(Math.max(0, minValue * 0.9), maxValue * 1.1);
+        rangeAxis.setRange(Math.max(0, minValue * 0.9), maxValue);
 
         // Set chart background
         chart.setBackgroundPaint(Color.WHITE);

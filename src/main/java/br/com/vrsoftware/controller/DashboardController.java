@@ -40,7 +40,7 @@ public class DashboardController {
         model.addAttribute("username", credentials.getEmail());
 
         // Update coverage data
-        List<CoverageDataDTO> coverageData = CoverageParserService.parseCoverageCsv();
+        List<CoverageDataDTO> coverageData = CoverageParserService.parseCoverageMapDB();
         session.setAttribute("coverageData", coverageData);
 
         return "dashboard";

@@ -1,18 +1,25 @@
 package br.com.vrsoftware.service.plotting.coverage;
 
 import br.com.vrsoftware.dto.plotting.CoverageDataDTO;
+import br.com.vrsoftware.enums.MapName;
+import br.com.vrsoftware.enums.Meses;
+import br.com.vrsoftware.exceptions.EncryptionException;
 import br.com.vrsoftware.exceptions.ParsingException;
+import br.com.vrsoftware.util.MapDB;
+import org.mapdb.Serializer;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.time.LocalDate;
 
 @Service
 public class CoverageParserService {
@@ -51,6 +58,51 @@ public class CoverageParserService {
         } catch (IOException e) {
             throw new ParsingException("Error reading file: " + DATASET_CSV, e);
         }
+    }
+
+    public static List<CoverageDataDTO> parseCoverageMapDB() {
+        int year = LocalDate.now().getYear();
+        List<CoverageDataDTO> coverageData = new ArrayList<>();
+
+        try (
+            MapDB<Integer, double[]> mapDBEstimated = new MapDB<>(
+                    MapName.COVERAGE_REPORT_ESTIMATED_PERCENTAGE.getName(),
+                    Serializer.INTEGER,
+                    Serializer.DOUBLE_ARRAY
+            );
+        ) {
+
+            double[] estimatedPercentages = mapDBEstimated.get(year);
+
+            for (int month = 0; month < 12; month++) {
+                double estimated = estimatedPercentages != null ? estimatedPercentages[month] : 0.0;
+
+                coverageData.add(new CoverageDataDTO(Meses.getFromIndice(month).getNome(), estimated, 0.0));
+            }
+        } catch (Exception e) {
+            throw new ParsingException("Error parsing coverage report data: " + e.getMessage(), e);
+        }
+
+        try (
+                MapDB<Integer, double[]> mapDBExecuted = new MapDB<>(
+                        MapName.COVERAGE_REPORT_EXECUTED_PERCENTAGE.getName(),
+                        Serializer.INTEGER,
+                        Serializer.DOUBLE_ARRAY
+                )
+        ) {
+            double[] executedPercentages = mapDBExecuted.get(year);
+
+            for (int month = 0; month < 12; month++) {
+                double executed = executedPercentages != null ? executedPercentages[month] : 0.0;
+
+                coverageData.get(month).setExecutedPercentage(executed);
+            }
+
+        } catch (Exception e) {
+            throw new ParsingException("Error parsing coverage report data: " + e.getMessage(), e);
+        }
+
+        return coverageData;
     }
 
     // Filter coverage data based on a predicate
