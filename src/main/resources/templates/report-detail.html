@@ -83,16 +83,28 @@
                 </div>
             </div>
             <div class="row mt-2">
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <p class="mb-1">
-                        <strong>Assignee:</strong>
+                        <strong>Responsável:</strong>
                         <span th:text="${issue.fields?.assignee?.displayName ?: 'Unassigned'}">John Doe</span>
                     </p>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <p class="mb-1">
-                        <strong>Reporter:</strong>
+                        <strong>Relator:</strong>
                         <span th:text="${issue.fields?.reporter?.displayName ?: 'Unknown'}">Jane Smith</span>
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <p class="mb-1">
+                        <strong>Programador:</strong>
+                        <span th:text="${issue.fields?.developer?.displayName ?: 'Unknown'}">Alex Johnson</span>
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <p class="mb-1">
+                        <strong>QA:</strong>
+                        <span th:text="${issue.fields?.tester?.displayName ?: 'Unknown'}">Emily Davis</span>
                     </p>
                 </div>
             </div>
