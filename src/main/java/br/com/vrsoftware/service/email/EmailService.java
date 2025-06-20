@@ -1,4 +1,4 @@
-package br.com.vrsoftware.service.Email;
+package br.com.vrsoftware.service.email;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

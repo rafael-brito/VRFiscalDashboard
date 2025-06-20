@@ -4,7 +4,7 @@ import br.com.vrsoftware.dto.ReportTypeDTO;
 import br.com.vrsoftware.dto.jira.issue.IssueDTO;
 import br.com.vrsoftware.dto.plotting.CoverageDataDTO;
 import br.com.vrsoftware.request.EmailRequest;
-import br.com.vrsoftware.service.Email.EmailService;
+import br.com.vrsoftware.service.email.EmailService;
 import br.com.vrsoftware.service.jira.SummarizeService;
 import br.com.vrsoftware.service.plotting.WorklogChartService;
 import br.com.vrsoftware.service.plotting.coverage.CoverageChartService;
@@ -204,7 +204,7 @@ public class ReportController {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar e-mail: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar e-mail. Por favor, tente novamente mais tarde.");
         }
     }
 
@@ -213,7 +213,9 @@ public class ReportController {
      */
     @PostMapping("/send-email-worklog")
     @ResponseBody
-    public ResponseEntity<String> sendReportEmailWorklog(@RequestBody EmailRequest emailRequest, HttpSession session, String issueKey) {
+    public ResponseEntity<String> sendReportEmailWorklog(@RequestBody EmailRequest emailRequest,
+                                                         HttpSession session,
+                                                         @RequestParam("issueKey") String issueKey) {
         String subject = emailRequest.getSubject();
         String message = emailRequest.getMessage();
 
@@ -248,7 +250,7 @@ public class ReportController {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar e-mail: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao enviar e-mail. Por favor, tente novamente mais tarde.");
         }
     }
 
