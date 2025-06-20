@@ -22,14 +22,9 @@ public class LoginController {
         this.setupCredentialsService = setupCredentialsService;
     }
 
-    @GetMapping("/login")
+    @GetMapping({"/", "/login"})
     public String showLoginPage() {
         return "login";
-    }
-
-    @GetMapping("/welcome")
-    public String welcome(Model model) {
-        return "welcome";
     }
 
     @PostMapping("/signup")

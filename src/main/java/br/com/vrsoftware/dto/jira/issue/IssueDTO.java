@@ -68,6 +68,15 @@ public class IssueDTO implements Serializable {
         Worklog worklog;
         ProjectDTO project;
         PriorityDTO priority;
+        @JsonAlias("customfield_10033")
+        @JsonProperty("developer")
+        ActorDTO developer;
+        @JsonAlias("customfield_10118")
+        @JsonProperty("tester")
+        ActorDTO tester;
+        @JsonAlias("customfield_10026")
+        @JsonProperty("storyPoints")
+        String storyPoints;
 
         public JiraFields() {}
 
@@ -149,6 +158,30 @@ public class IssueDTO implements Serializable {
 
         public void setPriority(PriorityDTO priority) {
             this.priority = priority;
+        }
+
+        public ActorDTO getDeveloper() {
+            return developer;
+        }
+
+        public void setDeveloper(ActorDTO developer) {
+            this.developer = developer;
+        }
+
+        public ActorDTO getTester() {
+            return tester;
+        }
+
+        public void setTester(ActorDTO tester) {
+            this.tester = tester;
+        }
+
+        public String getStoryPoints() {
+            return storyPoints;
+        }
+
+        public void setStoryPoints(String storyPoints) {
+            this.storyPoints = storyPoints;
         }
 
         @Override

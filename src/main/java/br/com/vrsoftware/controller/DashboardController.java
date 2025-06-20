@@ -2,7 +2,9 @@ package br.com.vrsoftware.controller;
 
 import br.com.vrsoftware.dto.AuthCredentialsDTO;
 import br.com.vrsoftware.dto.jira.issue.IssueDTO;
+import br.com.vrsoftware.dto.plotting.CoverageDataDTO;
 import br.com.vrsoftware.service.jira.DashboardApiClientService;
+import br.com.vrsoftware.service.plotting.coverage.CoverageParserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -36,6 +38,10 @@ public class DashboardController {
 
         // Get username from credentials
         model.addAttribute("username", credentials.getEmail());
+
+        // Update coverage data
+        List<CoverageDataDTO> coverageData = CoverageParserService.parseCoverageCsv();
+        session.setAttribute("coverageData", coverageData);
 
         return "dashboard";
     }

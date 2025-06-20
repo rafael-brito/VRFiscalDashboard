@@ -11,11 +11,15 @@ java {
     sourceCompatibility = '17'
 }
 
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'com.jayway.jsonpath:json-path:2.9.0'
